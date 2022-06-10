@@ -1,115 +1,132 @@
-let playing = true;
-let random = false;
-const playButton = document.querySelector(".player-play");
-const nextButton = document.querySelector(".player-next");
-const prevButton = document.querySelector(".player-prev");
-const thumbnail = document.querySelector(".player-image");
-const song = document.querySelector("#song");
-const songList = document.querySelectorAll(".song");
-const songArtist = document.querySelector(".player-author");
-const songTitle = document.querySelector(".player-title");
-const progressBar = document.querySelector("#progress-bar");
+const song = document.getElementById("song");
+const playBtn = document.querySelector(".player-inner");
+const nextBtn = document.querySelector(".play-forward");
+const prevBtn = document.querySelector(".play-back");
+const durationTime = document.querySelector(".duration");
+const remainingTime = document.querySelector(".remaining");
+const rangeBar = document.querySelector(".range");
+const musicName = document.querySelector(".music-name");
+const musicThumbnail = document.querySelector(".music-thumb");
+const musicImage = document.querySelector(".music-thumb img");
+const playRepeat = document.querySelector(".play-repeat");
 
-let songIndex = 0;
-let songs = [
-  "./files/holo.mp3",
-  "./files/home.mp3",
-  "./files/spark.mp3",
-  "./files/summer.mp3",
+let isPlaying = true;
+let indexSong = 0;
+let isRepeat = false;
+// const musics = ["holo.mp3", "summer.mp3", "spark.mp3", "home.mp3"];
+const musics = [
+  {
+    id: 1,
+    title: "Holo",
+    file: "holo.mp3",
+    image:
+      "https://images.unsplash.com/photo-1614624532983-4ce03382d63d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1931&q=80",
+  },
+  {
+    id: 2,
+    title: "Summer",
+    file: "summer.mp3",
+    image:
+      "https://images.unsplash.com/photo-1616763355548-1b606f439f86?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+  },
 ];
-let thumbnails = [
-  "https://cdn.dribbble.com/users/3960463/screenshots/13952774/media/1083c2b91054c7d7ee7c0bd47d60d5e0.png?compress=1&resize=800x600",
-  "https://cdn.dribbble.com/users/3960463/screenshots/14808856/media/09a06e9c0d0f897dd9ea1f038541c495.png?compress=1&resize=1000x750",
-  "https://cdn.dribbble.com/users/3960463/screenshots/14630140/media/c79331860d7ca1b97430a4888617f428.png?compress=1&resize=1000x750",
-  "https://cdn.dribbble.com/users/3960463/screenshots/14516886/media/bc272ecce9bec415eb28b7fe65e99117.png?compress=1&resize=1000x750",
-];
-let songArtists = ["Pop King", "Pop King", "Pop King", "Pop King"];
-let songTitles = ["Ampyx Holo", "Ampyx Home", "Ampyx Spark", "Last Summer"];
-function handleClickEachSong(e) {
-  const index = parseInt(e.target.dataset.index);
-  nextSong(index);
-}
-function playPause() {
-  if (playing) {
-    const song = document.querySelector("#song");
-    song.play();
-    thumbnail.classList.add("is-playing");
-    playButton.classList.add("fa-pause");
-
-    playing = false;
+/**
+ * Music
+ * id: 1
+ * title: Holo
+ * file: holo.mp3
+ * image: unsplash
+ */
+let timer;
+let repeatCount = 0;
+playRepeat.addEventListener("click", function () {
+  if (isRepeat) {
+    isRepeat = false;
+    playRepeat.removeAttribute("style");
   } else {
-    thumbnail.classList.remove("is-playing");
-    playButton.classList.remove("fa-pause");
-    song.pause();
-    playing = true;
+    isRepeat = true;
+    playRepeat.style.color = "#ffb86c";
   }
-}
-
-function nextSong(index = -1) {
-  if (index >= 0) {
-    songIndex = index;
-  } else {
-    songIndex++;
-  }
-  if (songIndex > songs.length - 1) {
-    songIndex = 0;
-  }
-  song.src = songs[songIndex];
-  thumbnail.src = thumbnails[songIndex];
-
-  songArtist.innerHTML = songArtists[songIndex];
-  songTitle.innerHTML = songTitles[songIndex];
-
-  playing = true;
-  playPause();
-}
-function previousSong() {
-  songIndex--;
-  if (songIndex < 0) {
-    songIndex = 1;
-  }
-  song.src = songs[songIndex];
-  thumbnail.src = thumbnails[songIndex];
-  songArtist.innerHTML = songArtists[songIndex];
-  songTitle.innerHTML = songTitles[songIndex];
-
-  playing = true;
-  playPause();
-}
-
-function updateProgressValue() {
-  progressBar.max = song.duration;
-  progressBar.value = song.currentTime;
-  document.querySelector(".player-remaining").innerHTML = formatTime(
-    Math.floor(song.currentTime)
-  );
-  if (document.querySelector(".player-duration").innerHTML === "NaN:NaN") {
-    document.querySelector(".player-duration").innerHTML = "0:00";
-  } else {
-    document.querySelector(".player-duration").innerHTML = formatTime(
-      Math.floor(song.duration)
-    );
-  }
-}
-
-function formatTime(seconds) {
-  let min = Math.floor(seconds / 60);
-  let sec = Math.floor(seconds - min * 60);
-  if (sec < 10) {
-    sec = `0${sec}`;
-  }
-  return `${min}:${sec}`;
-}
-setInterval(updateProgressValue, 500);
-function changeProgressBar() {
-  song.currentTime = progressBar.value;
-}
-progressBar.addEventListener("change", changeProgressBar);
-playButton.addEventListener("click", playPause);
-nextButton.addEventListener("click", nextSong);
-prevButton.addEventListener("click", previousSong);
-song.addEventListener("ended", function () {
-  nextSong();
 });
-
-songList.forEach((el) => el.addEventListener("click", handleClickEachSong));
+nextBtn.addEventListener("click", function () {
+  changeSong(1);
+});
+prevBtn.addEventListener("click", function () {
+  changeSong(-1);
+});
+song.addEventListener("ended", handleEndedSong);
+function handleEndedSong() {
+  repeatCount++;
+  if (isRepeat && repeatCount === 1) {
+    // handle repeat song
+    isPlaying = true;
+    playPause();
+  } else {
+    changeSong(1);
+  }
+}
+function changeSong(dir) {
+  if (dir === 1) {
+    // next song
+    indexSong++;
+    if (indexSong >= musics.length) {
+      indexSong = 0;
+    }
+    isPlaying = true;
+  } else if (dir === -1) {
+    // prev song
+    indexSong--;
+    if (indexSong < 0) {
+      indexSong = musics.length - 1;
+    }
+    isPlaying = true;
+  }
+  init(indexSong);
+  // song.setAttribute("src", `./music/${musics[indexSong].file}`);
+  playPause();
+}
+playBtn.addEventListener("click", playPause);
+function playPause() {
+  if (isPlaying) {
+    musicThumbnail.classList.add("is-playing");
+    song.play();
+    playBtn.innerHTML = `<ion-icon name="pause-circle"></ion-icon>`;
+    isPlaying = false;
+    timer = setInterval(displayTimer, 500);
+  } else {
+    musicThumbnail.classList.remove("is-playing");
+    song.pause();
+    playBtn.innerHTML = `<ion-icon name="play"></ion-icon>`;
+    isPlaying = true;
+    clearInterval(timer);
+  }
+}
+function displayTimer() {
+  const { duration, currentTime } = song;
+  rangeBar.max = duration;
+  rangeBar.value = currentTime;
+  remainingTime.textContent = formatTimer(currentTime);
+  if (!duration) {
+    durationTime.textContent = "00:00";
+  } else {
+    durationTime.textContent = formatTimer(duration);
+  }
+}
+function formatTimer(number) {
+  const minutes = Math.floor(number / 60);
+  const seconds = Math.floor(number - minutes * 60);
+  return `${minutes < 10 ? "0" + minutes : minutes}:${
+    seconds < 10 ? "0" + seconds : seconds
+  }`;
+}
+rangeBar.addEventListener("change", handleChangeBar);
+function handleChangeBar() {
+  song.currentTime = rangeBar.value;
+}
+function init(indexSong) {
+  song.setAttribute("src", `./music/${musics[indexSong].file}`);
+  musicImage.setAttribute("src", musics[indexSong].image);
+  musicName.textContent = musics[indexSong].title;
+}
+displayTimer();
+init(indexSong);
